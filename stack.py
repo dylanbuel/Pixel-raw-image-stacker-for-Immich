@@ -1,8 +1,15 @@
 import requests
 import json
+import argparse
 
 def getAPIInfo() -> dict:
-    with open ('config.json') as configFile:
+    parser = argparse.ArgumentParser(
+                    prog='Raw image stacker',
+                    description=' This application is intended to stack RAW and JPEG images taken by Pixel phones inside Immich')
+    parser.add_argument('--config', help='Path to config file', default='config.json')
+    
+    args = parser.parse_args()
+    with open (args.config) as configFile:
         config = json.load(configFile)
         return config
 
