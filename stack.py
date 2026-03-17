@@ -52,16 +52,25 @@ def groupAssetsByFileType(assets: list) -> dict:
 
 def listJpgAndDngWithMatchingIDs(jpgAssets: list, dngAssets: list) -> list:
     matchingAssets = []
-    for rawAsset in dngAssets:
-        id = rawAsset["originalFileName"].split(".")[0]
-        for jpgAsset in jpgAssets:
-            jpgId = jpgAsset["originalFileName"].split(".")[0]
-            if id == jpgId:
-                matchingAssets.append({
-                    "id": id,
-                    "jpgAsset": jpgAsset,
-                    "dngAsset": rawAsset
-                })
+    jpgAssetSet = set()
+    dngAssetSet = set()
+    jpgAssetDict = {}
+    dngAssetDict = {}
+
+    for jpgAsset in jpgAssets:
+        jpgAssetSet.add(jpgAsset["originalFileName"].split(".")[0])
+        jpgAssetDict[jpgAsset["originalFileName"].split(".")[0]] = jpgAsset
+    for dngAsset in dngAssets:
+        dngAssetSet.add(dngAsset["originalFileName"].split(".")[0])
+        dngAssetDict[dngAsset["originalFileName"].split(".")[0]] = dngAsset
+
+    for jpgAsset in jpgAssetSet:
+        if jpgAsset in dngAssetSet:
+            matchingAssets.append({
+                "id": jpgAsset,
+                "jpgAsset": jpgAssetDict[jpgAsset],
+                "dngAsset": dngAssetDict[jpgAsset]
+            })
     return matchingAssets
 
 def getExistingStackedAssets(apiConfig: dict) -> list:
