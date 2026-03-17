@@ -13,30 +13,32 @@ def getAPIInfo() -> dict:
         config = json.load(configFile)
         return config
 
-def getAllAlbums(apiConfig: dict) -> list:
-    url = apiConfig["baseURL"] + "api/albums"
-    headers = {
-        "x-api-key": apiConfig["apiKey"]
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception(f"Failed to get albums: {response.status_code} - {response.text}")
-
-def getAssetFromAlbum(albums: list, apiConfig: dict) -> list:
+def getAssets(apiConfig: dict) -> list:
+    url = apiConfig["baseURL"] + "api/search/metadata/"
     assets = []
-    for album in albums:
-        url = apiConfig["baseURL"] + f"api/albums/{album['id']}"
+    page = 1
+
+    while True:
         headers = {
-            "x-api-key": apiConfig["apiKey"]
+            "x-api-key": apiConfig["apiKey"],
+            "Content-Type": "application/json"
         }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            albumResponse = response.json()
-        else:
-            raise Exception(f"Failed to get assets for album {album['id']}: {response.status_code} - {response.text}")
-        assets.extend(albumResponse["assets"])
+        data = {
+            "type": "IMAGE",
+            "page": page
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        responseDate = response.json()
+        if response.status_code != 200:
+            raise Exception(f"Failed to get assets: {response.status_code} - {response.text}")
+
+        assets.extend(responseDate["assets"]["items"])
+        page = responseDate["assets"]["nextPage"]
+
+        if page is None:
+            break
+
     return assets
 
 def groupAssetsByFileType(assets: list) -> dict:
@@ -107,10 +109,8 @@ def stackDuplicate(assetsWithMatchingIDs: list, apiConfig: dict) -> list:
 if __name__ == '__main__':
     print("Reading Config")
     apiConfig = getAPIInfo()
-    print("Getting all Albums")
-    albums = getAllAlbums(apiConfig)
-    print("Getting all Assets from Albums")
-    assets = getAssetFromAlbum(albums, apiConfig)
+    print("Getting all Assets")
+    assets = getAssets(apiConfig)
     print("Grouping Assets by MIME Type")
     assetsByMIMEType = groupAssetsByFileType(assets)
     print("Finding JPG and DNG Assets with Matching Pixel IDs")
@@ -124,8 +124,3 @@ if __name__ == '__main__':
     print(f"Stacked {len(stackedAssets)} Assets")
     for assetId in stackedAssets:
         print(f"Stacked Asset with ID: {assetId}")
-
-
-        
-    
-
