@@ -34,11 +34,10 @@ def getAssets(apiConfig: dict) -> list:
             raise Exception(f"Failed to get assets: {response.status_code} - {response.text}")
 
         assets.extend(responseDate["assets"]["items"])
-        page = responseDate["assets"]["nextPage"]
-
-        if page is None:
+        if responseDate["assets"]["nextPage"] is None:
             break
-
+        else:
+            page = int(responseDate["assets"]["nextPage"])
     return assets
 
 def groupAssetsByFileType(assets: list) -> dict:
